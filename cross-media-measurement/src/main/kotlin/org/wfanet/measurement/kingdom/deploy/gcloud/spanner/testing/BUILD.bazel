@@ -5,9 +5,7 @@ kt_jvm_library(
     testonly = True,
     srcs = glob(["*.kt"]),
     data = ["//src/main/kotlin/org/wfanet/measurement/kingdom/deploy/gcloud/spanner:kingdom.sdl"],
-    visibility = [
-        "//src/main/kotlin/org/wfanet/measurement/gcloud:deployment",
-    ],
+    visibility =  ["//visibility:public"],
     deps = [
         "//imports/java/com/google/cloud/spanner",
         "//imports/kotlin/kotlinx/coroutines:core",

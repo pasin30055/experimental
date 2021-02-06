@@ -20,6 +20,10 @@ It is in .gitignore; please don't commit your local changes.
 # Settings for the repository where Docker images are stored.
 # The image path is the container_registry, the prefix, and an
 # image-specific suffix joined with slashes.
+
+#  You need to fill in these fields before push your local images.
+
+
 IMAGE_REPOSITORY_SETTINGS = struct(
     # URL of the container registry.
     container_registry = "",

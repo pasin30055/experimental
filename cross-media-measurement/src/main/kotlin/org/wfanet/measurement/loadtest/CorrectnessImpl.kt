@@ -16,6 +16,7 @@ package org.wfanet.measurement.loadtest
 
 import com.google.common.truth.extensions.proto.ProtoTruth.assertThat
 import com.google.protobuf.ByteString
+import java.lang.System.currentTimeMillis
 import java.nio.file.Paths
 import java.time.Clock
 import java.time.Duration
@@ -112,48 +113,48 @@ class CorrectnessImpl(
         }
         .toList()
 
-    // Schedule a report before loading the metric requisitions.
-    val campaignIds = generatedCampaigns.map { it.campaignId }
-    val reportConfigAndScheduleId =
-      relationalDatabase.scheduleReport(externalAdvertiserId, campaignIds)
-
-    val anySketches = generatedCampaigns.map { it.sketch }
-    val combinedAnySketch = SketchProtos.toAnySketch(sketchConfig).apply { mergeAll(anySketches) }
-    val reach = estimateCardinality(combinedAnySketch)
-    val frequency = estimateFrequency(combinedAnySketch)
-    val storedResultsPath = storeEstimationResults(reach, frequency)
-    testResult.computationBlobKey = storedResultsPath
-    logger.info("Estimation Results saved with blob key: $storedResultsPath")
-
-    // Finally, we are sending encrypted sketches to the PublisherDataService.
-    coroutineScope {
-      generatedCampaigns.forEach {
-        launch {
-          encryptAndSend(it, testResult)
-        }
-      }
-    }
-
-    val expectedResult =
-      ReportDetails.Result.newBuilder().setReach(reach).putAllFrequency(frequency).build()
-    logger.info("Expected Result: $expectedResult")
-
-    // Start querying Spanner after 2 min.
-    logger.info("Waiting 2 min...")
-    delay(Duration.ofMinutes(2).toMillis())
-    val finishedReport =
-      relationalDatabase.getFinishedReport(
-        reportConfigAndScheduleId.reportConfig,
-        reportConfigAndScheduleId.schedule
-      )
-    val actualResult = finishedReport.reportDetails.result
-    logger.info("Actual Result: $actualResult")
-
-    assertThat(actualResult).isEqualTo(expectedResult)
-
-    val blobKey = storeTestResult(testResult.build())
-    println("Test Result saved with blob key: $blobKey")
-    logger.info("Correctness Test passes with manifest: $blobKey.")
+//    // Schedule a report before loading the metric requisitions.
+//    val campaignIds = generatedCampaigns.map { it.campaignId }
+//    val reportConfigAndScheduleId =
+//      relationalDatabase.scheduleReport(externalAdvertiserId, campaignIds)
+//
+//    val anySketches = generatedCampaigns.map { it.sketch }
+//    val combinedAnySketch = SketchProtos.toAnySketch(sketchConfig).apply { mergeAll(anySketches) }
+//    val reach = estimateCardinality(combinedAnySketch)
+//    val frequency = estimateFrequency(combinedAnySketch)
+//    val storedResultsPath = storeEstimationResults(reach, frequency)
+//    testResult.computationBlobKey = storedResultsPath
+//    logger.info("Estimation Results saved with blob key: $storedResultsPath")
+//
+//    // Finally, we are sending encrypted sketches to the PublisherDataService.
+//    coroutineScope {
+//      generatedCampaigns.forEach {
+//        launch {
+//          encryptAndSend(it, testResult)
+//        }
+//      }
+//    }
+//
+//    val expectedResult =
+//      ReportDetails.Result.newBuilder().setReach(reach).putAllFrequency(frequency).build()
+//    logger.info("Expected Result: $expectedResult")
+//
+//    // Start querying Spanner after 2 min.
+//    logger.info("Waiting 2 min...")
+//    delay(Duration.ofMinutes(2).toMillis())
+//    val finishedReport =
+//      relationalDatabase.getFinishedReport(
+//        reportConfigAndScheduleId.reportConfig,
+//        reportConfigAndScheduleId.schedule
+//      )
+//    val actualResult = finishedReport.reportDetails.result
+//    logger.info("Actual Result: $actualResult")
+//
+//    assertThat(actualResult).isEqualTo(expectedResult)
+//
+//    val blobKey = storeTestResult(testResult.build())
+//    println("Test Result saved with blob key: $blobKey")
+//    logger.info("Correctness Test passes with manifest: $blobKey.")
   }
 
   private suspend fun KingdomRelationalDatabase.getFinishedReport(
@@ -306,10 +307,15 @@ class CorrectnessImpl(
   }
 
   override fun generateSketch(reach: Set<Long>): AnySketch {
+    val start = currentTimeMillis()/1000
+
     val anySketch: AnySketch = SketchProtos.toAnySketch(sketchConfig)
     for (value: Long in reach) {
       anySketch.insert(value, mapOf("frequency" to 1L))
     }
+
+    val end = currentTimeMillis()/1000
+    logger.info(" generateSketch with size ${reach.size} in ${end - start} second.")
     return anySketch
   }
 

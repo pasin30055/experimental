@@ -31,9 +31,9 @@ package k8s
 			image:           _image
 			imagePullPolicy: _imagePullPolicy
 			args:            [
-						"--data-provider-count=2",
+						"--data-provider-count=3",
 						"--campaign-count=1",
-						"--generated-set-size=1000",
+						"--generated-set-size=10000000",
 						"--universe-size=10000000000",
 						"--run-id=",
 						"--sketch-config-file=/app/wfa_measurement_system/src/main/kotlin/org/wfanet/measurement/loadtest/config/liquid_legions_sketch_config.textproto",
