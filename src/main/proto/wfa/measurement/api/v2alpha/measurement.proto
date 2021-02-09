@@ -82,4 +82,10 @@ message Measurement {
   // Result of this `Measurement` computation. Output-only. Only set if `state`
   // is `SUCCEEDED`.
   Result result = 5;
+
+  // Map of caller-defined tag keys to values for this `Measurement`.
+  // These are to enable `MeasurementConsumer`s to apply labels to the
+  // `Measurement` to aid in filtering and identifying later on.
+  // Do not put sensitive data in this field.
+  map<string, string> tags = 12;
 }
